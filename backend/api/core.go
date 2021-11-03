@@ -5,6 +5,7 @@ import (
 	"github.com/rabingaire/html-parser/middleware"
 )
 
+// Setup routes and gin engine
 func Setup() *gin.Engine {
 	r := gin.Default()
 	r.Use(middleware.CORS())

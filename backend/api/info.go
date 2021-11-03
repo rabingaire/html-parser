@@ -13,6 +13,7 @@ import (
 	"golang.org/x/net/html"
 )
 
+// GetPageInfoResponse is the response structure for the GetPageInfo API
 type GetPageInfoResponse struct {
 	HTMLVersion            string         `json:"html_version"`
 	PageTitle              string         `json:"page_title"`
@@ -25,11 +26,13 @@ type GetPageInfoResponse struct {
 	links []string
 }
 
+// Errors
 var (
 	ErrInternalServerError = errors.New("internal server error")
 	ErrInvalidURL          = errors.New("invalid URL")
 )
 
+// GetPageInfo GET /api/v1/info
 func GetPageInfo(c *gin.Context) {
 	reqURL := strings.Trim(c.Query("url"), "")
 	if len(reqURL) <= 0 {
@@ -63,6 +66,7 @@ func GetPageInfo(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// parseHTML parses html and returns GetPageInfoResponse object
 func parseHTML(r io.Reader, u *url.URL) (*GetPageInfoResponse, error) {
 	response := &GetPageInfoResponse{
 		Headings:          make(map[string]int),
@@ -112,7 +116,7 @@ func parseHTML(r io.Reader, u *url.URL) (*GetPageInfoResponse, error) {
 						break
 					}
 				}
-			case "input": // check if login form ins present
+			case "input": // check if login form is present
 				for _, a := range n.Attr {
 					if a.Key == "type" && a.Val == "password" {
 						response.ContainsLoginForm = true
@@ -122,6 +126,7 @@ func parseHTML(r io.Reader, u *url.URL) (*GetPageInfoResponse, error) {
 			}
 		}
 
+		// recursively checking all the nodes
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			f(c)
 		}
@@ -129,6 +134,7 @@ func parseHTML(r io.Reader, u *url.URL) (*GetPageInfoResponse, error) {
 
 	f(doc)
 
+	// use goroutine to check if the links aggrigated are accessible or not
 	message := make(chan int, len(response.links))
 	for _, link := range response.links {
 		go func(link string) {
@@ -152,11 +158,13 @@ func parseHTML(r io.Reader, u *url.URL) (*GetPageInfoResponse, error) {
 	return response, nil
 }
 
+// isInternalURL check if URI is internal or not
 func isInternalURL(uri string) bool {
 	u, err := url.Parse(uri)
 	return !(err == nil && len(u.Scheme) > 0)
 }
 
+// mergePath merges the internal URI to the host URL
 func mergePath(u *url.URL, link string) string {
 	p := u.Path
 
