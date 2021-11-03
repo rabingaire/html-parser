@@ -1,0 +1,18 @@
+version: "3"
+services:
+  html-parser-backend:
+    build:
+      context: ./backend/
+      dockerfile: ./Dockerfile
+    container_name: html-parser-backend
+    ports:
+      - 8000:8000
+  html-parser-frontend:
+    build:
+      context: ./frontend/
+      dockerfile: ./Dockerfile
+    container_name: html-parser-frontend
+    ports:
+      - 3000:80
+    depends_on:
+      - html-parser-backend
